@@ -1,0 +1,11 @@
+name = "brunette-telegram-chat"
+main = "src/worker.js"
+compatibility_date = "2026-07-01"
+workers_dev = true
+
+[vars]
+# Domains allowed to send messages. Separate multiple domains with commas.
+ALLOWED_ORIGINS = "https://brunette.com.ua,https://www.brunette.com.ua"
+
+# Do not put TELEGRAM_BOT_TOKEN or TELEGRAM_CHAT_ID in this file.
+# Add them as encrypted secrets with Wrangler or in the Cloudflare dashboard.
