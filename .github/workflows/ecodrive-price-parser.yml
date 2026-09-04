@@ -1,0 +1,59 @@
+name: EcoDrive Price Parser
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Раз в сутки. GitHub cron работает в UTC.
+    - cron: '37 2 * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  parse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+
+    defaults:
+      run:
+        working-directory: ecodrive-price-parser
+
+    env:
+      APPS_SCRIPT_WEBAPP_URL: ${{ secrets.APPS_SCRIPT_WEBAPP_URL }}
+      APPS_SCRIPT_TOKEN: ${{ secrets.APPS_SCRIPT_TOKEN }}
+
+      # Каталог сканируется полностью, включая page-2, page-3 и дальше.
+      ECODRIVE_CATALOG_URL: https://ecodrive.in.ua/eko-energiya/zaryadni-stancii/
+      ECODRIVE_MAX_PAGES: '20'
+
+      # Необязательно. Нужны только если EcoDrive блокирует IP GitHub Actions.
+      PROXY_SERVER: ${{ secrets.PROXY_SERVER }}
+      PROXY_USERNAME: ${{ secrets.PROXY_USERNAME }}
+      PROXY_PASSWORD: ${{ secrets.PROXY_PASSWORD }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Parse full EcoDrive catalog and update Google Sheet
+        run: npm start
+
+      - name: Upload parser debug screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ecodrive-parser-debug
+          path: ecodrive-price-parser/debug-*.png
+          if-no-files-found: ignore
+          retention-days: 7
